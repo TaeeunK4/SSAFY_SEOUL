@@ -8,7 +8,7 @@ import ChatBot from './components/ChatBot.vue';
 const locale = ref('ko');
 const messages = {
   ko: {
-    logo: 'LocalHub', navHome: '🌸 구별 소풍 지도', navBoard: '💌 여행 피드',
+    logo: 'LocalHub', navHome: '🌸 구별 추천 장소', navBoard: '💌 여행 피드',
     heroTitle: '가보고 싶은 곳이 있나요?', heroSub: '여행갈 곳을 추천해드려요!',
     selectDistrict: '✨ 구를 선택해 주세요', allSeoul: '서울 전체 지역', noPlaces: '위에서 구를 선택하시면 상큼한 정보가 가득 나타나요!',
     관광명소: '🍦 가볼만한 곳', '추천 문화시설 & 쇼핑': '🛍️ 추천 문화시설 & 쇼핑', tmiPlace: '대표 장소', picnicGuide: '소풍 가이드',
@@ -45,35 +45,7 @@ const t = (key) => messages[locale.value]?.[key] || key;
 
 // language menu state (use small inline SVGs)
 const langMenuOpen = ref(false);
-const langSvgs = {
-  ko: `<svg viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Korean flag">
-        <rect width="24" height="16" fill="#fff"/>
-        <!-- Taegeuk -->
-        <g transform="translate(12,8)">
-          <path d="M0,-3a3 3 0 1 0 0 6a1.5 1.5 0 1 1 0-3a1.5 1.5 0 0 0 0-3z" fill="#c60c30"/>
-          <path d="M0,3a3 3 0 1 0 0-6a1.5 1.5 0 1 1 0,3a1.5 1.5 0 0 0 0,3z" fill="#003478"/>
-          <circle cx="0" cy="-1" r="0.6" fill="#003478"/>
-          <circle cx="0" cy="1" r="0.6" fill="#c60c30"/>
-        </g>
-        <!-- Trigrams (simplified) -->
-        <g fill="#000" transform="scale(0.7)">
-          <rect x="1" y="1.2" width="1.8" height="0.3"/>
-          <rect x="1" y="2.2" width="1.8" height="0.3"/>
-          <rect x="1" y="3.2" width="1.8" height="0.3"/>
-          <rect x="21" y="1.2" width="1.8" height="0.3"/>
-          <rect x="21" y="2.2" width="1.8" height="0.3"/>
-          <rect x="21" y="3.2" width="1.8" height="0.3"/>
-          <rect x="1" y="10.5" width="1.8" height="0.3"/>
-          <rect x="1" y="11.5" width="1.8" height="0.3"/>
-          <rect x="1" y="12.5" width="1.8" height="0.3"/>
-          <rect x="21" y="10.5" width="1.8" height="0.3"/>
-          <rect x="21" y="11.5" width="1.8" height="0.3"/>
-          <rect x="21" y="12.5" width="1.8" height="0.3"/>
-        </g>
-      </svg>`,
-  en: `<svg viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="US flag"><rect width="24" height="16" fill="#b22234"/><g fill="#fff"><rect width="24" height="2" y="2"/><rect width="24" height="2" y="6"/><rect width="24" height="2" y="10"/></g><rect width="8" height="6" fill="#3c3b6e"/><g fill="#fff" transform="translate(1,1)" font-size="2"> <text x="1" y="3">★</text></g></svg>`,
-  zh: `<svg viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="China flag"><rect width="24" height="16" fill="#de2910"/><g fill="#ffde00"><polygon points="3,3 4.2,5.5 6.8,5.5 4.6,7 5.8,9.5 3,8 0.2,9.5 1.4,7  -0.8,5.5 1.8,5.5" transform="translate(1,0) scale(0.45)"/></g></svg>`
-};
+const langLabels = { ko: 'KR', en: 'EN', zh: 'ZN' };
 const selectLang = (code) => { locale.value = code; langMenuOpen.value = false; };
 
 // close language menu when clicking/tapping outside (works on mobile)
@@ -681,9 +653,9 @@ const clickPlace = (p) => {
         </nav>
         <div class="lang-switcher">
           <div class="lang-current">
-            <button class="lang-btn" @click.stop="langMenuOpen = !langMenuOpen" aria-label="Change language" v-html="langSvgs[locale]"></button>
+            <button class="lang-btn" @click.stop="langMenuOpen = !langMenuOpen" aria-label="Change language">{{ langLabels[locale] }}</button>
             <div v-if="langMenuOpen" class="lang-menu">
-              <button v-for="(svg, code) in langSvgs" :key="code" @click="selectLang(code)" :class="{ active: locale===code }" v-html="svg"></button>
+              <button v-for="(label, code) in langLabels" :key="code" @click="selectLang(code)" :class="{ active: locale===code }">{{ label }}</button>
             </div>
           </div>
         </div>
@@ -776,8 +748,8 @@ const clickPlace = (p) => {
                     </div>
                   </div>
                   <div class="add-comment">
-                    <input v-model="commentAuthors[p.id]" placeholder="작성자명(선택)" style="width:120px" />
-                    <input v-model="commentsDrafts[p.id]" placeholder="댓글을 입력하세요" />
+                    <input v-model="commentAuthors[p.id]" placeholder="작성자명" style="width:120px" />
+                    <input v-model="commentsDrafts[p.id]" placeholder="댓글 입력" />
                     <button @click="submitComment(p.id)">등록</button>
                   </div>
                 </div>
@@ -787,8 +759,10 @@ const clickPlace = (p) => {
         </div>
         <!-- 권역 태그 필터 -->
         <div style="margin-bottom:12px" class="district-filter-bar">
-          <button @click="filterDistrict = ''" :class="{ active: filterDistrict === '' }">모두</button>
-          <button v-for="d in districts" :key="d" @click="filterDistrict = d" :class="{ active: filterDistrict === d }">{{ d }}</button>
+          <select v-model="filterDistrict" class="styled-select">
+            <option value="">{{ t('allSeoul') || '모두' }}</option>
+            <option v-for="d in districts" :key="d" :value="d">{{ d }}</option>
+          </select>
         </div>
         <div v-for="d in Object.keys(groupedPosts.groups)" :key="d" v-if="groupedPosts.groups[d] && groupedPosts.groups[d].length && (!filterDistrict || filterDistrict===d)">
           <h3 class="district-header" @click="toggleFilterDistrict(d)">
@@ -831,8 +805,8 @@ const clickPlace = (p) => {
                   </div>
                 </div>
                 <div class="add-comment">
-                  <input v-model="commentAuthors[post.id]" placeholder="작성자명(선택)" style="width:120px" />
-                  <input v-model="commentsDrafts[post.id]" placeholder="댓글을 입력하세요" />
+                  <input v-model="commentAuthors[post.id]" placeholder="작성자명" style="width:120px" />
+                  <input v-model="commentsDrafts[post.id]" placeholder="댓글 입력" />
                   <button @click="submitComment(post.id)">등록</button>
                 </div>
               </div>
@@ -845,13 +819,16 @@ const clickPlace = (p) => {
       <div class="form-wrapper">
         <h2>{{ isEditing ? t('editPost') : t('writePost') }}</h2>
         <div class="district-icons">
-          <button v-for="d in districts" :key="d" :class="{ active: selectedBoardDistrict === d }" @click="selectBoardDistrict(d)">📍 {{ d }}</button>
+          <select v-model="selectedBoardDistrict" class="styled-select">
+            <option value="">{{ t('selectDistrict') }}</option>
+            <option v-for="d in districts" :key="d" :value="d">📍 {{ d }}</option>
+          </select>
         </div>
         <p v-if="selectedBoardDistrict">선택된 권역: <strong>{{ selectedBoardDistrict }}</strong></p>
         <input v-model="boardForm.title" type="text" :placeholder="t('phTitle')" />
         <input v-model="boardForm.password" type="password" :placeholder="t('phPw')" />
         <textarea v-model="boardForm.content" :placeholder="t('phContent')" rows="5"></textarea>
-        <div style="display:flex;gap:8px">
+        <div class="form-actions">
           <button @click="savePost" class="btn-main">{{ isEditing ? t('btnEditComplete') : t('btnRegister') }}</button>
           <button @click="cancelEdit" class="btn-cancel">{{ t('btnCancel') }}</button>
         </div>
@@ -867,6 +844,9 @@ const clickPlace = (p) => {
 body { margin: 0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; background: var(--bg); color: var(--text); }
 .app-container { display: flex; flex-direction: column; min-height: 100vh; }
 
+/* Ensure box-sizing so flex children can shrink properly */
+*, *::before, *::after { box-sizing: border-box; }
+
 .navbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 40px; background: var(--surface); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .logo { font-size: 20px; font-weight: bold; color: var(--primary); }
 .nav-controls { display: flex; gap: 20px; }
@@ -874,7 +854,7 @@ body { margin: 0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:gr
 .nav-links button.active { background: var(--primary); color: white; }
 
 .hero { text-align: center; padding: 40px 20px; background: linear-gradient(180deg, #ffeaa7 0%, var(--bg) 100%); }
-.styled-select { padding: 10px 20px; font-size: 16px; border-radius: 8px; border: 2px solid var(--primary); outline: none; margin-top: 15px;}
+.styled-select { padding: 10px 20px; font-size: 16px; border-radius: 8px; border: 2px solid var(--primary); outline: none; margin-top: 15px; width: 100%; box-sizing: border-box; max-width: none; }
 
 .main-layout { display: flex; flex-direction: column; gap: 24px; padding: 24px 40px; box-sizing: border-box; }
 .map-area { position: relative; display: block; gap: 12px; height: auto; }
@@ -884,7 +864,7 @@ body { margin: 0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:gr
 .home-feed-panel { background: #fff; padding: 12px; border-radius: 12px; margin-top: 12px; border: 1px solid #f1e6e6; }
 .home-feed-panel .place-card { cursor: pointer; }
 
-.list-area { display: flex; flex-direction: column; gap: 16px; background: var(--surface); padding: 16px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); height: auto; overflow: visible; }
+.list-area { display: flex; flex-direction: column; gap: 16px; background: var(--surface); padding: 16px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); height: auto; overflow: hidden; max-height: 48vh; }
 .cat-toggle { display: flex; gap: 8px; }
 .cat-toggle button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #eee; font-weight: bold; }
 .cat-toggle button.active { background: var(--primary); color: white; }
@@ -894,7 +874,7 @@ body { margin: 0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:gr
 .close-detail { background: transparent; border:none; font-size:18px; cursor:pointer; }
 .detail-body img { width:100%; max-height:200px; object-fit:cover; border-radius:8px; margin-bottom:8px; }
 .detail-body p { margin:4px 0; font-size:13px; }
-.scroll-cards { display: flex; flex-direction: column; gap: 10px; padding-right: 4px; max-height: none; overflow: visible; }
+.scroll-cards { display: flex; flex-direction: column; gap: 10px; padding-right: 4px; flex: 1 1 auto; overflow-y: auto; max-height: 100%; }
 .place-card { padding: 12px; background: #fffbf0; border-radius: 8px; cursor: pointer; border: 1px solid #ffeaa7; transition: transform 0.1s; }
 .place-card:hover { transform: translateY(-2px); }
 .empty-tip { text-align: center; color: #999; margin-top: 40px; font-size: 14px; }
@@ -909,19 +889,24 @@ body { margin: 0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:gr
 .feed-card { padding: 16px; background: #fffbf0; border-radius: 8px; cursor: pointer; border: 1px solid #ffeaa7; }
 .feed-title-bar { display: flex; justify-content: space-between; align-items: center; }
 .feed-details { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ffeaa7; }
+.feed-details { overflow: visible; }
 .btn-group { display: flex; gap: 8px; justify-content: flex-end; }
 .btn-group button { border: none; background: none; cursor: pointer; font-size: 16px; }
-.district-icons { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-.district-icons button { background:#fff; border:1px solid #eee; padding:6px 10px; border-radius:8px; cursor:pointer; }
+.district-icons { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px; margin-bottom:8px; }
+.district-icons button { background:#fff; border:1px solid #eee; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:14px; }
 .district-icons button.active { background:var(--primary); color:#fff; }
-.district-filter-bar { display:flex; gap:8px; margin-bottom:8px; }
-.district-filter-bar button { padding:6px 10px; border-radius:8px; border:1px solid #eee; background:#fff; cursor:pointer; }
+.district-icons select { grid-column: 1 / -1; width: 100%; }
+.district-filter-bar { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px; margin-bottom:8px; overflow-x:auto; }
+.district-filter-bar button { padding:8px 12px; border-radius:8px; border:1px solid #eee; background:#fff; cursor:pointer; font-size:14px; }
 .district-filter-bar button.active { background:var(--primary); color:#fff; }
+.district-filter-bar select { grid-column: 1 / -1; width: 100%; }
 .post-meta { font-size:12px; color:#666; }
 .comments-section { margin-top:12px; border-top:1px dashed #f1e6e6; padding-top:8px; }
 .comment { background:#f9f7f7; padding:8px; border-radius:6px; margin-bottom:6px; }
 .add-comment { display:flex; gap:8px; }
-.add-comment input { flex:1; padding:6px; border-radius:6px; border:1px solid #ddd; }
+.add-comment input { flex:1; padding:6px; border-radius:6px; border:1px solid #ddd; min-width:0; }
+.comments-section input { min-width:0; }
+.comment small, .comment p { word-break: break-word; white-space: normal; }
 .add-comment button { background:var(--primary); color:#fff; border:none; padding:6px 10px; border-radius:6px; }
 
 .btn-cancel { background: #f1f1f1; border: 1px solid #ddd; padding: 10px 12px; border-radius: 8px; cursor: pointer; }
@@ -966,4 +951,19 @@ body { margin: 0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:gr
 .lang-menu button { background: none; border: none; padding: 8px 12px; cursor: pointer; }
 .lang-menu button svg { width: 36px; height: 22px; }
 .lang-menu button.active { background: var(--primary); color: white; border-radius: 6px; }
+
+/* form actions positioned below inputs */
+.form-actions { display:flex; gap:8px; flex-direction: column; align-items: center; margin-top: 12px; }
+.form-actions button { white-space: nowrap; min-width: 160px; }
+
+@media (max-width: 1024px) {
+  .district-icons { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .district-filter-bar { grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+
+@media (max-width: 420px) {
+  .district-icons { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .district-filter-bar { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .form-actions button { min-width: 140px; }
+}
 </style>
