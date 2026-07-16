@@ -281,6 +281,9 @@ const currentTmi = computed(() => {
   return { lat: base.lat, lng: base.lng, placeName: tr.placeName || '', tmi: tr.tmi || '', image: tr.image || base.image || '' };
 });
 
+// toggle to show images in map popups (set false to remove pinpoint images)
+const showPopupImages = ref(false);
+
 // fetch representative image from Wikipedia / Wikimedia for a place name
 const fetchDistrictImage = async (placeName) => {
   if (!placeName) return '';
@@ -613,11 +616,11 @@ const handleDistrictChange = () => {
   if (selectedDistrict.value && currentTmi.value) {
     const d = currentTmi.value;
     if (currentMarker) { try { map.removeLayer(currentMarker); } catch(e){} currentMarker = null; }
-    // if district data has image, use proxy
+    // if district data has image, use proxy (include image only if showPopupImages)
     let districtImg = d.image || '';
     if (districtImg && districtImg.startsWith('http://')) districtImg = districtImg.replace(/^http:\/\//i, 'https://');
     const proxied = districtImg ? `/.netlify/functions/proxy-image?url=${encodeURIComponent(districtImg)}` : '';
-    const popupHtml = proxied ? `<div style="min-width:180px"><strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div><div style="margin-top:8px"><img src=\"${proxied}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div></div>` : `<strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div>`;
+    const popupHtml = showPopupImages.value && proxied ? `<div style="min-width:180px"><strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div><div style="margin-top:8px"><img src=\"${proxied}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div></div>` : `<strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div>`;
     currentMarker = L.marker([d.lat, d.lng]).addTo(map).bindPopup(popupHtml, { maxWidth: 260 }).openPopup();
     map.setView([d.lat, d.lng], 12);
   } else {
@@ -640,8 +643,8 @@ const clickPlace = (p) => {
   if (img && img.startsWith('//')) img = 'https:' + img;
   // use proxy to avoid mixed-content / CORS issues
   const proxiedSrc = img ? `/.netlify/functions/proxy-image?url=${encodeURIComponent(img)}` : '';
-  // build popup with safe onerror fallback
-  const popupHtml = `<div style="min-width:180px;"><strong>${title}</strong>${proxiedSrc ? `<div style=\"margin-top:6px\"><img src=\"${proxiedSrc}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div>` : ''}</div>`;
+  // build popup; include image only if showPopupImages is true
+  const popupHtml = showPopupImages.value ? `<div style="min-width:180px;"><strong>${title}</strong>${proxiedSrc ? `<div style=\"margin-top:6px\"><img src=\"${proxiedSrc}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div>` : ''}</div>` : `<div style="min-width:180px;"><strong>${title}</strong></div>`;
   currentMarker.bindPopup(popupHtml, { maxWidth: 260 }).openPopup();
     map.setView([coords.lat, coords.lng], 15);
   } else if (selectedDistrict.value && currentTmi.value) {
