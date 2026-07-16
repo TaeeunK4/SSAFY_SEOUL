@@ -613,7 +613,12 @@ const handleDistrictChange = () => {
   if (selectedDistrict.value && currentTmi.value) {
     const d = currentTmi.value;
     if (currentMarker) { try { map.removeLayer(currentMarker); } catch(e){} currentMarker = null; }
-    currentMarker = L.marker([d.lat, d.lng]).addTo(map).bindPopup(`<strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div>`).openPopup();
+    // if district data has image, use proxy
+    let districtImg = d.image || '';
+    if (districtImg && districtImg.startsWith('http://')) districtImg = districtImg.replace(/^http:\/\//i, 'https://');
+    const proxied = districtImg ? `/.netlify/functions/proxy-image?url=${encodeURIComponent(districtImg)}` : '';
+    const popupHtml = proxied ? `<div style="min-width:180px"><strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div><div style="margin-top:8px"><img src=\"${proxied}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div></div>` : `<strong>${t(selectedDistrict.value)}</strong><div style="margin-top:6px">${d.placeName}</div>`;
+    currentMarker = L.marker([d.lat, d.lng]).addTo(map).bindPopup(popupHtml, { maxWidth: 260 }).openPopup();
     map.setView([d.lat, d.lng], 12);
   } else {
     map.setView([37.5665, 126.9780], 11);
@@ -633,8 +638,10 @@ const clickPlace = (p) => {
   // normalize to https to avoid mixed-content blocking
   if (img && img.startsWith('http://')) img = img.replace(/^http:\/\//i, 'https://');
   if (img && img.startsWith('//')) img = 'https:' + img;
+  // use proxy to avoid mixed-content / CORS issues
+  const proxiedSrc = img ? `/.netlify/functions/proxy-image?url=${encodeURIComponent(img)}` : '';
   // build popup with safe onerror fallback
-  const popupHtml = `<div style="min-width:180px;"><strong>${title}</strong>${img ? `<div style=\"margin-top:6px\"><img src=\"${img}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div>` : ''}</div>`;
+  const popupHtml = `<div style="min-width:180px;"><strong>${title}</strong>${proxiedSrc ? `<div style=\"margin-top:6px\"><img src=\"${proxiedSrc}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div>` : ''}</div>`;
   currentMarker.bindPopup(popupHtml, { maxWidth: 260 }).openPopup();
     map.setView([coords.lat, coords.lng], 15);
   } else if (selectedDistrict.value && currentTmi.value) {
