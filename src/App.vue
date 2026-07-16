@@ -626,12 +626,16 @@ const clickPlace = (p) => {
   if (!map) return;
   const coords = extractCoords(p);
   if (coords) {
-    if (currentMarker) { try { map.removeLayer(currentMarker); } catch(e){} currentMarker = null; }
-    currentMarker = L.marker([coords.lat, coords.lng]).addTo(map);
-    const title = p.title || p.courseName || p.name || '';
-    const img = p.firstimage || p.firstimage2 || p.image || p.thumb || '';
-    const popupHtml = `<div style="min-width:180px;"><strong>${title}</strong>${img ? `<div style=\"margin-top:6px\"><img src=\"${img}\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div>` : ''}</div>`;
-    currentMarker.bindPopup(popupHtml).openPopup();
+  if (currentMarker) { try { map.removeLayer(currentMarker); } catch(e){} currentMarker = null; }
+  currentMarker = L.marker([coords.lat, coords.lng]).addTo(map);
+  const title = p.title || p.courseName || p.name || '';
+  let img = p.firstimage || p.firstimage2 || p.image || p.thumb || '';
+  // normalize to https to avoid mixed-content blocking
+  if (img && img.startsWith('http://')) img = img.replace(/^http:\/\//i, 'https://');
+  if (img && img.startsWith('//')) img = 'https:' + img;
+  // build popup with safe onerror fallback
+  const popupHtml = `<div style="min-width:180px;"><strong>${title}</strong>${img ? `<div style=\"margin-top:6px\"><img src=\"${img}\" onerror=\"this.onerror=null;this.src='https://placehold.co/600x360?text=No+Image'\" style=\"width:100%;height:100px;object-fit:cover;border-radius:6px\"/></div>` : ''}</div>`;
+  currentMarker.bindPopup(popupHtml, { maxWidth: 260 }).openPopup();
     map.setView([coords.lat, coords.lng], 15);
   } else if (selectedDistrict.value && currentTmi.value) {
     const d = currentTmi.value;
